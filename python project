@@ -1,0 +1,50 @@
+import requests
+from bs4 import BeautifulSoup
+import smtplib
+from email.mime.text 
+import MIMEText
+from email.mime.multipart 
+import MIMEMultipart
+EMAIL_ADDRESS = 'keranloretta@gmail.com'
+EMAIL_PASSWORD = '*******'
+AMAZON_URL = 'https://www.amazon.com/MEROKEETY-Cocktail-Party-Midi-Dresses/dp/B0C7Z2CKQ1/ref=sr_1_3?_encoding=UTF8&content-id=amzn1.sym.b4114be9-6d3d-4aed-8b31-fcbf38a83486&crid
+=1PW0S93CC85GY&keywords=Dresses&pd_rd_r=67ac881e-389a-46ef-8169-da899752c
+1c5&pd_rd_w=NjfcV&pd_rd_wg=K6tZD&pf_rd_p=b4114be9-6d3d-4aed-8b31-fcbf38a83486&pf_rd_r=FGCKYFA56MH1NYYV8J4V&qid=1699892972&sprefix=dresses%2Caps%2C146&sr=8-3'
+DESIRED_PRICE = 500.0
+def get_amazon_price(url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+    }
+
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    price_element = soup.find('span', {'id': 'priceblock_ourprice'})
+    if price_element:
+        price_str = price_element.get_text()
+        price = float(price_str.replace('$', '').replace(',', ''))
+        return price
+    else:
+        return None
+
+def send_email(subject, body):
+    msg = MIMEMultipart()
+    msg['From'] = 'keranloretta@gmail.com
+    msg['To'] = 'jeevika@gmail.com'
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+   with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(EMAIL_ADDRESS, EMAIL_ADDRESS, text)
+
+def track_price():
+    current_price = get_amazon_price(AMAZON_URL)
+
+    if current_price is not None and current_price < DESIRED_PRICE:
+        subject = "Amazon Price Alert!"
+        body = f"The price of the product is now ${current_price}! Buy now: {AMAZON_URL}"
+        send_email(subject, body)
+
+if __name__ == "__main__":
+    track_price()
